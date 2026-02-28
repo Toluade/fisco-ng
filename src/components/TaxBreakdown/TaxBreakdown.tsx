@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CollapsibleCard } from "@/components/ui/collapsible-card";
 import { Separator } from "@/components/ui/separator";
 import type { BandResult, DeductionItem, MonthlyTaxRow, ReliefItem, TaxCalculationResult } from "@/lib/tax";
 import { MONTH_LABELS } from "@/lib/tax";
@@ -43,14 +43,22 @@ export function TaxBreakdown({ result, mode }: TaxBreakdownProps) {
   const taxLabel = isEmployed ? "Annual Tax" : "YTD Tax Owed";
   const taxValue = isEmployed ? annualTax : (ytdTaxOwed ?? 0);
 
+  const breakdownSummary = isEmployed ? formatNaira(annualTax) : formatNaira(ytdTaxOwed ?? 0);
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">
-          Tax Breakdown {!isEmployed && <span className="text-muted-foreground font-normal text-sm">(Year-to-Date)</span>}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <CollapsibleCard
+      title={
+        <>
+          Tax Breakdown{" "}
+          {!isEmployed && (
+            <span className="text-muted-foreground font-normal text-sm">(Year-to-Date)</span>
+          )}
+        </>
+      }
+      summary={breakdownSummary}
+      defaultOpen={true}
+    >
+      <div className="space-y-4">
         {/* Income */}
         <BreakdownRow label={grossLabel} value={formatNaira(grossValue)} bold />
 
@@ -123,8 +131,8 @@ export function TaxBreakdown({ result, mode }: TaxBreakdownProps) {
             <MonthlyBreakdownSection rows={monthlyTaxBreakdown} />
           </>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </CollapsibleCard>
   );
 }
 
