@@ -1,7 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import type { BandResult, DeductionItem, ReliefItem, TaxCalculationResult } from "@/lib/tax";
+import type { BandResult, DeductionItem, MonthlyTaxRow, ReliefItem, TaxCalculationResult } from "@/lib/tax";
+import { MONTH_LABELS } from "@/lib/tax";
 import { cn } from "@/lib/utils";
 import { formatNaira, formatPercent } from "@/lib/utils/format";
 
@@ -25,10 +26,13 @@ export function TaxBreakdown({ result, mode }: TaxBreakdownProps) {
     ytdTaxOwed,
     monthlyTax,
     monthlyGrossIncome = 0,
+    monthlyTaxBreakdown,
   } = result;
 
   const isEmployed = mode === "employed";
-  const showData = isEmployed ? monthlyGrossIncome > 0 : (ytdGrossIncome ?? 0) > 0;
+  const showData = isEmployed
+    ? monthlyGrossIncome > 0
+    : (ytdGrossIncome ?? 0) > 0 || (monthlyTaxBreakdown?.length ?? 0) > 0;
 
   if (!showData) return null;
 
@@ -110,6 +114,14 @@ export function TaxBreakdown({ result, mode }: TaxBreakdownProps) {
             subLabel="(Annual ÷ 12)"
             bold
           />
+        )}
+
+        {/* Monthly breakdown (self-employed only) */}
+        {!isEmployed && monthlyTaxBreakdown && monthlyTaxBreakdown.length > 0 && (
+          <>
+            <Separator />
+            <MonthlyBreakdownSection rows={monthlyTaxBreakdown} />
+          </>
         )}
       </CardContent>
     </Card>
@@ -223,6 +235,72 @@ function BandRow({ band }: { band: BandResult }) {
         <span className="tabular-nums text-sm font-medium">
           {formatNaira(band.taxInBand)}
         </span>
+      </div>
+    </div>
+  );
+}
+
+function MonthlyBreakdownSection({ rows }: { rows: MonthlyTaxRow[] }) {
+  const hasExpenses = rows.some((r) => r.expenses > 0);
+
+  const totalIncome = rows.reduce((s, r) => s + r.grossIncomeNgn, 0);
+  const totalExpenses = rows.reduce((s, r) => s + r.expenses, 0);
+  const totalTax = rows.reduce((s, r) => s + r.taxOwed, 0);
+  const totalNet = rows.reduce((s, r) => s + r.netIncome, 0);
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        Monthly Breakdown
+      </p>
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="text-muted-foreground border-b">
+              <th className="py-1 text-left font-medium">Month</th>
+              <th className="py-1 text-right font-medium">Income (₦)</th>
+              {hasExpenses && (
+                <th className="py-1 text-right font-medium hidden sm:table-cell">Expenses (₦)</th>
+              )}
+              <th className="py-1 text-right font-medium">Tax Owing</th>
+              <th className="py-1 text-right font-medium">Net Income</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr
+                key={row.month}
+                className={cn(
+                  "border-b border-border/50",
+                  row.taxOwed === 0 && "opacity-50"
+                )}
+              >
+                <td className="py-1 pr-2">{MONTH_LABELS[row.month].slice(0, 3)}</td>
+                <td className="py-1 text-right tabular-nums">{formatNaira(row.grossIncomeNgn)}</td>
+                {hasExpenses && (
+                  <td className="py-1 text-right tabular-nums hidden sm:table-cell text-destructive">
+                    {row.expenses > 0 ? `− ${formatNaira(row.expenses)}` : "—"}
+                  </td>
+                )}
+                <td className="py-1 text-right tabular-nums font-medium">{formatNaira(row.taxOwed)}</td>
+                <td className="py-1 text-right tabular-nums">{formatNaira(row.netIncome)}</td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr className="font-semibold">
+              <td className="py-1.5 pr-2">Total</td>
+              <td className="py-1.5 text-right tabular-nums">{formatNaira(totalIncome)}</td>
+              {hasExpenses && (
+                <td className="py-1.5 text-right tabular-nums hidden sm:table-cell text-destructive">
+                  {totalExpenses > 0 ? `− ${formatNaira(totalExpenses)}` : "—"}
+                </td>
+              )}
+              <td className="py-1.5 text-right tabular-nums">{formatNaira(totalTax)}</td>
+              <td className="py-1.5 text-right tabular-nums">{formatNaira(totalNet)}</td>
+            </tr>
+          </tfoot>
+        </table>
       </div>
     </div>
   );

@@ -91,14 +91,24 @@ export interface EmployedInputs {
 export interface SelfEmployedInputs {
   employmentType: "self-employed";
   monthlyIncomes: Record<Month, number>;
+  monthlyExpenses: Record<Month, number>;
   annualRent: number;              // full annual rent paid
-  monthlyWorkExpenses: number;     // monthly work/business expenses
   currentMonth: number;            // 0-indexed (0 = Jan, 11 = Dec) — last filled month
   incomeCurrency: ForeignCurrency; // default "NGN"
   exchangeRateToNgn: number;       // 1 unit → N naira; ignored when NGN (rate = 1)
 }
 
 export type TaxInputs = EmployedInputs | SelfEmployedInputs;
+
+// ─── Monthly Tax Row ─────────────────────────────────────────────────────────
+
+export interface MonthlyTaxRow {
+  month: Month;
+  grossIncomeNgn: number;  // NGN equivalent after exchange rate
+  expenses: number;        // work expenses in NGN
+  taxOwed: number;         // incremental tax this month (NGN)
+  netIncome: number;       // grossIncomeNgn − taxOwed
+}
 
 // ─── Tax Calculation Result ───────────────────────────────────────────────────
 
@@ -128,6 +138,9 @@ export interface TaxCalculationResult {
   projectedAnnualTax?: number;
   projectedAnnualIncome?: number;
   monthsElapsed?: number;
+
+  // Monthly breakdown (self-employed mode)
+  monthlyTaxBreakdown?: MonthlyTaxRow[];
 
   // Effective rate
   effectiveRate: number;

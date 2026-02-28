@@ -26,6 +26,34 @@ export function saveYtdIncomes(incomes: YtdStorage): void {
   }
 }
 
+// ─── YTD Expenses ─────────────────────────────────────────────────────────────
+
+const EXPENSES_KEY = "fisco-ng:ytd-expenses";
+
+export type YtdExpensesStorage = Partial<Record<Month, number>>;
+
+export function loadYtdExpenses(): YtdExpensesStorage {
+  try {
+    const raw = localStorage.getItem(EXPENSES_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as unknown;
+    if (typeof parsed === "object" && parsed !== null) {
+      return parsed as YtdExpensesStorage;
+    }
+    return {};
+  } catch {
+    return {};
+  }
+}
+
+export function saveYtdExpenses(expenses: YtdExpensesStorage): void {
+  try {
+    localStorage.setItem(EXPENSES_KEY, JSON.stringify(expenses));
+  } catch {
+    // localStorage unavailable — silently fail
+  }
+}
+
 // ─── Currency Prefs ───────────────────────────────────────────────────────────
 
 const CURRENCY_KEY = "fisco-ng:currency-prefs";

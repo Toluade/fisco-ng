@@ -1,6 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import type { ForeignCurrency, Month, SelfEmployedInputs } from "@/lib/tax";
 import { CURRENCY_SYMBOLS, DEFAULT_EXCHANGE_RATES, MONTH_LABELS, MONTHS } from "@/lib/tax";
 import { parseNairaInput } from "@/lib/utils/format";
@@ -24,6 +23,15 @@ export function SelfEmployedForm({ inputs, onChange }: SelfEmployedFormProps) {
     onChange({
       monthlyIncomes: {
         ...inputs.monthlyIncomes,
+        [month]: value,
+      },
+    });
+  }
+
+  function handleExpenseChange(month: Month, value: number) {
+    onChange({
+      monthlyExpenses: {
+        ...inputs.monthlyExpenses,
         [month]: value,
       },
     });
@@ -138,6 +146,32 @@ export function SelfEmployedForm({ inputs, onChange }: SelfEmployedFormProps) {
         </CardContent>
       </Card>
 
+      {/* Expenses Log */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">
+            Expenses Log — {currentYear}
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Log deductible business expenses per month (internet, electricity, home-office, etc.). NTA 2025 §20. Always in NGN.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-1">
+          {MONTHS.map((month, idx) => (
+            <MonthIncomeRow
+              key={month}
+              month={MONTH_LABELS[month].slice(0, 3)}
+              monthIndex={idx}
+              value={inputs.monthlyExpenses[month] ?? 0}
+              onChange={(v) => handleExpenseChange(month, v)}
+              disabled={idx > inputs.currentMonth}
+              isCurrent={idx === inputs.currentMonth}
+              currencySymbol="₦"
+            />
+          ))}
+        </CardContent>
+      </Card>
+
       {/* Deductions */}
       <Card>
         <CardHeader>
@@ -151,17 +185,6 @@ export function SelfEmployedForm({ inputs, onChange }: SelfEmployedFormProps) {
             onChange={(v) => onChange({ annualRent: v })}
             placeholder="e.g. 1,200,000"
             hint="Enter the full rent you paid for the year. Relief = 20% of rent, capped at ₦500,000/yr."
-          />
-
-          <Separator />
-
-          <CurrencyInput
-            id="work-expenses"
-            label="Monthly Work Expenses (optional)"
-            value={inputs.monthlyWorkExpenses}
-            onChange={(v) => onChange({ monthlyWorkExpenses: v })}
-            placeholder="e.g. 50,000"
-            hint="Internet, electricity, home-office costs, etc. (NTA 2025 §20). You are responsible for determining the eligible business-use portion. Not applicable to employed workers."
           />
         </CardContent>
       </Card>

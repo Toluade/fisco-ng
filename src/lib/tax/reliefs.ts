@@ -1,4 +1,5 @@
 import type { DeductionItem, EmployedInputs, ReliefItem, SelfEmployedInputs } from "./types";
+import { MONTHS } from "./types";
 
 // ─── Rent Relief (NTA 2025 Section 30(vi)) ──────────────────────────────────
 // 20% of annual rent paid, capped at ₦500,000/year
@@ -98,20 +99,23 @@ export function computeSelfEmployedReliefs(
     ytdReliefs.push(rentRelief); // applied in full for YTD too
   }
 
-  // Work expenses — pro-rated for YTD
-  if (inputs.monthlyWorkExpenses > 0) {
-    const annual = inputs.monthlyWorkExpenses * 12;
-    const ytd = inputs.monthlyWorkExpenses * monthsElapsed;
+  // Work expenses — summed from per-month log
+  const ytdExpenses = MONTHS.slice(0, monthsElapsed).reduce(
+    (sum, m) => sum + (inputs.monthlyExpenses[m] ?? 0), 0
+  );
+  if (ytdExpenses > 0) {
+    const avgMonthly = ytdExpenses / monthsElapsed;
+    const projectedAnnual = avgMonthly * 12;
     annualReliefs.push({
       label: "Work Expenses",
-      annualAmount: annual,
-      monthlyAmount: inputs.monthlyWorkExpenses,
+      annualAmount: projectedAnnual,
+      monthlyAmount: avgMonthly,
       source: "NTA 2025 §20",
     });
     ytdReliefs.push({
       label: "Work Expenses (YTD)",
-      annualAmount: ytd,
-      monthlyAmount: inputs.monthlyWorkExpenses,
+      annualAmount: ytdExpenses,
+      monthlyAmount: avgMonthly,
       source: "NTA 2025 §20",
     });
   }

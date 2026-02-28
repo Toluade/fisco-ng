@@ -7,7 +7,7 @@ import { TaxBreakdown } from "@/components/TaxBreakdown/TaxBreakdown";
 import { calculateTax } from "@/lib/tax/calculator";
 import type { EmployedInputs, Month, SelfEmployedInputs } from "@/lib/tax";
 import { MONTHS } from "@/lib/tax";
-import { loadCurrencyPrefs, loadYtdIncomes, saveCurrencyPrefs, saveYtdIncomes } from "@/lib/utils/storage";
+import { loadCurrencyPrefs, loadYtdExpenses, loadYtdIncomes, saveCurrencyPrefs, saveYtdExpenses, saveYtdIncomes } from "@/lib/utils/storage";
 
 // ─── Defaults ────────────────────────────────────────────────────────────────
 
@@ -33,12 +33,13 @@ function buildSelfEmployedInputs(
   overrides?: Partial<SelfEmployedInputs>
 ): SelfEmployedInputs {
   const savedIncomes = loadYtdIncomes();
+  const savedExpenses = loadYtdExpenses();
   const savedPrefs = loadCurrencyPrefs();
   return {
     employmentType: "self-employed",
     monthlyIncomes: { ...defaultMonthlyIncomes(), ...savedIncomes },
+    monthlyExpenses: { ...defaultMonthlyIncomes(), ...savedExpenses },
     annualRent: 0,
-    monthlyWorkExpenses: 0,
     currentMonth: currentMonthIndex,
     incomeCurrency: savedPrefs?.incomeCurrency ?? "NGN",
     exchangeRateToNgn: savedPrefs?.exchangeRateToNgn ?? 1,
@@ -64,6 +65,11 @@ export function TaxCalculatorPage() {
   useEffect(() => {
     saveYtdIncomes(selfEmployedInputs.monthlyIncomes);
   }, [selfEmployedInputs.monthlyIncomes]);
+
+  // Persist YTD expenses to localStorage whenever they change
+  useEffect(() => {
+    saveYtdExpenses(selfEmployedInputs.monthlyExpenses);
+  }, [selfEmployedInputs.monthlyExpenses]);
 
   // Persist currency prefs to localStorage
   useEffect(() => {

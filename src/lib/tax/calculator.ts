@@ -2,12 +2,14 @@ import { TAX_BRACKETS } from "./brackets";
 import {
   computeEmployedDeductions,
   computeEmployedReliefs,
+  computeRentRelief,
   computeSelfEmployedReliefs,
 } from "./reliefs";
 import type {
   BandResult,
   EmployedInputs,
   Month,
+  MonthlyTaxRow,
   SelfEmployedInputs,
   TaxCalculationResult,
   TaxInputs,
@@ -112,6 +114,38 @@ function calculateEmployed(inputs: EmployedInputs): TaxCalculationResult {
   };
 }
 
+// ─── Monthly breakdown helper ─────────────────────────────────────────────────
+
+function computeMonthlyTaxBreakdown(
+  inputs: SelfEmployedInputs,
+  monthsElapsed: number,
+  rate: number
+): MonthlyTaxRow[] {
+  const annualRentRelief = computeRentRelief(inputs.annualRent)?.annualAmount ?? 0;
+  const rows: MonthlyTaxRow[] = [];
+  let runningIncome = 0;
+  let runningExpenses = 0;
+  let prevYtdTax = 0;
+
+  for (let i = 0; i < monthsElapsed; i++) {
+    const m = MONTHS[i];
+    const grossIncomeNgn = (inputs.monthlyIncomes[m] ?? 0) * rate;
+    const expenses = inputs.monthlyExpenses[m] ?? 0;
+    runningIncome += grossIncomeNgn;
+    runningExpenses += expenses;
+
+    const ytdTaxable = Math.max(0, runningIncome - annualRentRelief - runningExpenses);
+    const { annualTax: ytdTax } = applyBrackets(ytdTaxable);
+    const taxOwed = Math.max(0, ytdTax - prevYtdTax);
+    prevYtdTax = ytdTax;
+
+    if (grossIncomeNgn > 0 || expenses > 0) {
+      rows.push({ month: m, grossIncomeNgn, expenses, taxOwed, netIncome: grossIncomeNgn - taxOwed });
+    }
+  }
+  return rows;
+}
+
 // ─── Self-employed (YTD) calculation ─────────────────────────────────────────
 
 function calculateSelfEmployed(inputs: SelfEmployedInputs): TaxCalculationResult {
@@ -152,6 +186,8 @@ function calculateSelfEmployed(inputs: SelfEmployedInputs): TaxCalculationResult
 
   const effectiveRate = ytdGrossIncome > 0 ? ytdTaxOwed / ytdGrossIncome : 0;
 
+  const monthlyTaxBreakdown = computeMonthlyTaxBreakdown(inputs, monthsElapsed, rate);
+
   return {
     annualGrossIncome: projectedAnnualIncome,
     annualDeductions: [],
@@ -168,6 +204,7 @@ function calculateSelfEmployed(inputs: SelfEmployedInputs): TaxCalculationResult
     projectedAnnualTax,
     projectedAnnualIncome,
     monthsElapsed,
+    monthlyTaxBreakdown,
     effectiveRate,
   };
 }
