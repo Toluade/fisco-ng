@@ -98,7 +98,7 @@ export function SelfEmployedSummary({ result, incomeCurrency, exchangeRateToNgn 
       </div>
       {incomeCurrency && incomeCurrency !== "NGN" && (
         <p className="mt-2 text-center text-xs text-muted-foreground">
-          Figures reflect NGN equivalent at 1 {incomeCurrency} = ₦{formatNaira(exchangeRateToNgn ?? 1)}
+          Figures reflect NGN equivalent at 1 {incomeCurrency} = {formatNaira(exchangeRateToNgn ?? 1)}
         </p>
       )}
     </div>
