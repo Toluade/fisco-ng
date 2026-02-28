@@ -149,14 +149,13 @@ export function SelfEmployedForm({ inputs, onChange }: SelfEmployedFormProps) {
         defaultOpen={true}
       >
         <div className="space-y-1">
-          {MONTHS.map((month, idx) => (
+          {MONTHS.slice(0, inputs.currentMonth + 1).map((month, idx) => (
             <MonthIncomeRow
               key={month}
               month={MONTH_LABELS[month].slice(0, 3)}
               monthIndex={idx}
               value={inputs.monthlyIncomes[month] ?? 0}
               onChange={(v) => handleMonthChange(month, v)}
-              disabled={idx > inputs.currentMonth}
               isCurrent={idx === inputs.currentMonth}
               currencySymbol={CURRENCY_SYMBOLS[inputs.incomeCurrency]}
             />
@@ -176,14 +175,13 @@ export function SelfEmployedForm({ inputs, onChange }: SelfEmployedFormProps) {
         defaultOpen={false}
       >
         <div className="space-y-1">
-          {MONTHS.map((month, idx) => (
+          {MONTHS.slice(0, inputs.currentMonth + 1).map((month, idx) => (
             <MonthIncomeRow
               key={month}
               month={MONTH_LABELS[month].slice(0, 3)}
               monthIndex={idx}
               value={inputs.monthlyExpenses[month] ?? 0}
               onChange={(v) => handleExpenseChange(month, v)}
-              disabled={idx > inputs.currentMonth}
               isCurrent={idx === inputs.currentMonth}
               currencySymbol="₦"
             />

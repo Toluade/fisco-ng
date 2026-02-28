@@ -4,12 +4,12 @@ import { parseNairaInput } from "@/lib/utils/format";
 import { useRef, useState } from "react";
 
 interface MonthIncomeRowProps {
-  month: string;           // e.g. "Jan"
-  monthIndex: number;      // 0-based
+  month: string; // e.g. "Jan"
+  monthIndex: number; // 0-based
   value: number;
   onChange: (value: number) => void;
-  disabled: boolean;       // future months
-  isCurrent: boolean;      // current calendar month
+  disabled?: boolean; // future months
+  isCurrent: boolean; // current calendar month
   currencySymbol?: string; // default "₦"
 }
 
@@ -28,8 +28,8 @@ export function MonthIncomeRow({
   const displayValue = focused
     ? raw
     : value > 0
-    ? new Intl.NumberFormat("en-NG").format(value)
-    : "";
+      ? new Intl.NumberFormat("en-NG").format(value)
+      : "";
 
   function handleFocus() {
     setFocused(true);
@@ -54,13 +54,13 @@ export function MonthIncomeRow({
       className={cn(
         "flex items-center gap-3 rounded-md px-3 py-2",
         isCurrent && "bg-accent/50 ring-1 ring-ring",
-        disabled && "opacity-40"
+        disabled && "opacity-40",
       )}
     >
       <span
         className={cn(
           "w-8 shrink-0 text-sm font-medium",
-          isCurrent ? "text-foreground" : "text-muted-foreground"
+          isCurrent ? "text-foreground" : "text-muted-foreground",
         )}
       >
         {month}
