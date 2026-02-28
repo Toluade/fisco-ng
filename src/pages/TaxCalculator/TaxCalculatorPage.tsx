@@ -131,7 +131,12 @@ export function TaxCalculatorPage() {
             incomeCurrency={selfEmployedInputs.incomeCurrency}
             exchangeRateToNgn={selfEmployedInputs.exchangeRateToNgn}
           />
-          <TaxBreakdown result={selfEmployedResult} mode="self-employed" />
+          <TaxBreakdown
+            result={selfEmployedResult}
+            mode="self-employed"
+            incomeCurrency={selfEmployedInputs.incomeCurrency}
+            exchangeRateToNgn={selfEmployedInputs.exchangeRateToNgn}
+          />
         </TabsContent>
       </Tabs>
     </main>

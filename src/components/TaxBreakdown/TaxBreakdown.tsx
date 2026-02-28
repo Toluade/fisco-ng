@@ -1,17 +1,19 @@
 import { Badge } from "@/components/ui/badge";
 import { CollapsibleCard } from "@/components/ui/collapsible-card";
 import { Separator } from "@/components/ui/separator";
-import type { BandResult, DeductionItem, MonthlyTaxRow, ReliefItem, TaxCalculationResult } from "@/lib/tax";
+import type { BandResult, DeductionItem, ForeignCurrency, MonthlyTaxRow, ReliefItem, TaxCalculationResult } from "@/lib/tax";
 import { MONTH_LABELS } from "@/lib/tax";
 import { cn } from "@/lib/utils";
-import { formatNaira, formatPercent } from "@/lib/utils/format";
+import { formatForeignCurrency, formatNaira, formatPercent } from "@/lib/utils/format";
 
 interface TaxBreakdownProps {
   result: TaxCalculationResult;
   mode: "employed" | "self-employed";
+  incomeCurrency?: ForeignCurrency;
+  exchangeRateToNgn?: number;
 }
 
-export function TaxBreakdown({ result, mode }: TaxBreakdownProps) {
+export function TaxBreakdown({ result, mode, incomeCurrency, exchangeRateToNgn }: TaxBreakdownProps) {
   const {
     annualGrossIncome,
     annualDeductions,
@@ -44,6 +46,11 @@ export function TaxBreakdown({ result, mode }: TaxBreakdownProps) {
   const taxValue = isEmployed ? annualTax : (ytdTaxOwed ?? 0);
 
   const breakdownSummary = isEmployed ? formatNaira(annualTax) : formatNaira(ytdTaxOwed ?? 0);
+
+  const showFx = !isEmployed && incomeCurrency && incomeCurrency !== "NGN" && exchangeRateToNgn && exchangeRateToNgn > 0;
+  const fxTaxSubValue = showFx
+    ? `≈ ${formatForeignCurrency(ytdTaxOwed ?? 0, incomeCurrency!, exchangeRateToNgn!)}`
+    : undefined;
 
   return (
     <CollapsibleCard
@@ -112,7 +119,7 @@ export function TaxBreakdown({ result, mode }: TaxBreakdownProps) {
         <Separator />
 
         {/* Total */}
-        <BreakdownRow label={taxLabel} value={formatNaira(taxValue)} bold highlight />
+        <BreakdownRow label={taxLabel} value={formatNaira(taxValue)} subValue={fxTaxSubValue} bold highlight />
 
         {/* Monthly PAYE (employed only) */}
         {isEmployed && monthlyTax !== undefined && (
@@ -128,7 +135,11 @@ export function TaxBreakdown({ result, mode }: TaxBreakdownProps) {
         {!isEmployed && monthlyTaxBreakdown && monthlyTaxBreakdown.length > 0 && (
           <>
             <Separator />
-            <MonthlyBreakdownSection rows={monthlyTaxBreakdown} />
+            <MonthlyBreakdownSection
+              rows={monthlyTaxBreakdown}
+              incomeCurrency={showFx ? incomeCurrency : undefined}
+              exchangeRateToNgn={showFx ? exchangeRateToNgn : undefined}
+            />
           </>
         )}
       </div>
@@ -142,6 +153,7 @@ function BreakdownRow({
   label,
   value,
   subLabel,
+  subValue,
   bold = false,
   highlight = false,
   className,
@@ -149,6 +161,7 @@ function BreakdownRow({
   label: string;
   value: string;
   subLabel?: string;
+  subValue?: string;
   bold?: boolean;
   highlight?: boolean;
   className?: string;
@@ -167,15 +180,20 @@ function BreakdownRow({
           <span className="ml-1 text-xs font-normal text-muted-foreground">{subLabel}</span>
         )}
       </span>
-      <span
-        className={cn(
-          "tabular-nums text-sm",
-          bold ? "font-semibold" : "",
-          highlight && "text-primary font-bold text-base"
+      <div className="text-right">
+        <span
+          className={cn(
+            "tabular-nums text-sm",
+            bold ? "font-semibold" : "",
+            highlight && "text-primary font-bold text-base"
+          )}
+        >
+          {value}
+        </span>
+        {subValue && (
+          <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">{subValue}</p>
         )}
-      >
-        {value}
-      </span>
+      </div>
     </div>
   );
 }
@@ -248,8 +266,20 @@ function BandRow({ band }: { band: BandResult }) {
   );
 }
 
-function MonthlyBreakdownSection({ rows }: { rows: MonthlyTaxRow[] }) {
+function MonthlyBreakdownSection({
+  rows,
+  incomeCurrency,
+  exchangeRateToNgn,
+}: {
+  rows: MonthlyTaxRow[];
+  incomeCurrency?: ForeignCurrency;
+  exchangeRateToNgn?: number;
+}) {
   const hasExpenses = rows.some((r) => r.expenses > 0);
+  const showFx = !!incomeCurrency && !!exchangeRateToNgn && exchangeRateToNgn > 0;
+
+  const fx = (ngnAmount: number) =>
+    showFx ? formatForeignCurrency(ngnAmount, incomeCurrency!, exchangeRateToNgn!) : null;
 
   const totalIncome = rows.reduce((s, r) => s + r.grossIncomeNgn, 0);
   const totalExpenses = rows.reduce((s, r) => s + r.expenses, 0);
@@ -284,28 +314,58 @@ function MonthlyBreakdownSection({ rows }: { rows: MonthlyTaxRow[] }) {
                 )}
               >
                 <td className="py-1 pr-2">{MONTH_LABELS[row.month].slice(0, 3)}</td>
-                <td className="py-1 text-right tabular-nums">{formatNaira(row.grossIncomeNgn)}</td>
+                <td className="py-1 text-right tabular-nums">
+                  {formatNaira(row.grossIncomeNgn)}
+                  {showFx && row.grossIncomeNgn > 0 && (
+                    <div className="text-muted-foreground">{fx(row.grossIncomeNgn)}</div>
+                  )}
+                </td>
                 {hasExpenses && (
                   <td className="py-1 text-right tabular-nums hidden sm:table-cell text-destructive">
                     {row.expenses > 0 ? `− ${formatNaira(row.expenses)}` : "—"}
                   </td>
                 )}
-                <td className="py-1 text-right tabular-nums font-medium">{formatNaira(row.taxOwed)}</td>
-                <td className="py-1 text-right tabular-nums">{formatNaira(row.netIncome)}</td>
+                <td className="py-1 text-right tabular-nums font-medium">
+                  {formatNaira(row.taxOwed)}
+                  {showFx && row.taxOwed > 0 && (
+                    <div className="font-normal text-muted-foreground">{fx(row.taxOwed)}</div>
+                  )}
+                </td>
+                <td className="py-1 text-right tabular-nums">
+                  {formatNaira(row.netIncome)}
+                  {showFx && row.netIncome > 0 && (
+                    <div className="text-muted-foreground">{fx(row.netIncome)}</div>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
           <tfoot>
             <tr className="font-semibold">
               <td className="py-1.5 pr-2">Total</td>
-              <td className="py-1.5 text-right tabular-nums">{formatNaira(totalIncome)}</td>
+              <td className="py-1.5 text-right tabular-nums">
+                {formatNaira(totalIncome)}
+                {showFx && totalIncome > 0 && (
+                  <div className="font-normal text-muted-foreground">{fx(totalIncome)}</div>
+                )}
+              </td>
               {hasExpenses && (
                 <td className="py-1.5 text-right tabular-nums hidden sm:table-cell text-destructive">
                   {totalExpenses > 0 ? `− ${formatNaira(totalExpenses)}` : "—"}
                 </td>
               )}
-              <td className="py-1.5 text-right tabular-nums">{formatNaira(totalTax)}</td>
-              <td className="py-1.5 text-right tabular-nums">{formatNaira(totalNet)}</td>
+              <td className="py-1.5 text-right tabular-nums">
+                {formatNaira(totalTax)}
+                {showFx && totalTax > 0 && (
+                  <div className="font-normal text-muted-foreground">{fx(totalTax)}</div>
+                )}
+              </td>
+              <td className="py-1.5 text-right tabular-nums">
+                {formatNaira(totalNet)}
+                {showFx && totalNet > 0 && (
+                  <div className="font-normal text-muted-foreground">{fx(totalNet)}</div>
+                )}
+              </td>
             </tr>
           </tfoot>
         </table>

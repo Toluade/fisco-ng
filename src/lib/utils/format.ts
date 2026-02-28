@@ -1,3 +1,5 @@
+import type { ForeignCurrency } from "@/lib/tax";
+
 // ─── Currency formatting ──────────────────────────────────────────────────────
 
 const nairaFormatter = new Intl.NumberFormat("en-NG", {
@@ -17,6 +19,20 @@ const nairaFormatterDecimal = new Intl.NumberFormat("en-NG", {
 export function formatNaira(value: number, decimals = false): string {
   if (decimals) return nairaFormatterDecimal.format(value);
   return nairaFormatter.format(value);
+}
+
+export function formatForeignCurrency(
+  ngnAmount: number,
+  currency: ForeignCurrency,
+  exchangeRateToNgn: number
+): string {
+  const amount = ngnAmount / exchangeRateToNgn;
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
 }
 
 export function formatPercent(rate: number, decimals = 1): string {

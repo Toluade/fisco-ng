@@ -1,5 +1,5 @@
 import type { ForeignCurrency, TaxCalculationResult } from "@/lib/tax";
-import { formatNaira, formatPercent } from "@/lib/utils/format";
+import { formatForeignCurrency, formatNaira, formatPercent } from "@/lib/utils/format";
 import { SummaryCard } from "./SummaryCard";
 
 // ─── Employed Summary ─────────────────────────────────────────────────────────
@@ -67,6 +67,11 @@ export function SelfEmployedSummary({ result, incomeCurrency, exchangeRateToNgn 
 
   const remainingMonths = 12 - monthsElapsed;
 
+  const showFx = incomeCurrency && incomeCurrency !== "NGN" && exchangeRateToNgn && exchangeRateToNgn > 0;
+  const fxTax = showFx ? `≈ ${formatForeignCurrency(ytdTaxOwed, incomeCurrency!, exchangeRateToNgn!)}` : undefined;
+  const fxProjected = showFx ? `≈ ${formatForeignCurrency(projectedAnnualTax, incomeCurrency!, exchangeRateToNgn!)}` : undefined;
+  const fxNet = showFx ? `≈ ${formatForeignCurrency(ytdNetIncome, incomeCurrency!, exchangeRateToNgn!)}` : undefined;
+
   return (
     <div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -74,12 +79,14 @@ export function SelfEmployedSummary({ result, incomeCurrency, exchangeRateToNgn 
           label="YTD Tax Owed"
           value={formatNaira(ytdTaxOwed)}
           subValue={`${monthsElapsed} month${monthsElapsed !== 1 ? "s" : ""}`}
+          altValue={fxTax}
           highlight
         />
         <SummaryCard
           label="Projected Annual Tax"
           value={formatNaira(projectedAnnualTax)}
           subValue="based on YTD average"
+          altValue={fxProjected}
         />
         <SummaryCard
           label="Effective Rate"
@@ -94,6 +101,7 @@ export function SelfEmployedSummary({ result, incomeCurrency, exchangeRateToNgn 
               ? `${remainingMonths} month${remainingMonths !== 1 ? "s" : ""} remaining`
               : "Year complete"
           }
+          altValue={fxNet}
         />
       </div>
       {incomeCurrency && incomeCurrency !== "NGN" && (

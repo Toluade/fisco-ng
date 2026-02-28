@@ -5,6 +5,7 @@ interface SummaryCardProps {
   label: string;
   value: string;
   subValue?: string;
+  altValue?: string;
   highlight?: boolean;
   className?: string;
 }
@@ -13,6 +14,7 @@ export function SummaryCard({
   label,
   value,
   subValue,
+  altValue,
   highlight = false,
   className,
 }: SummaryCardProps) {
@@ -32,6 +34,9 @@ export function SummaryCard({
         </p>
         {subValue && (
           <p className="mt-0.5 text-xs text-muted-foreground">{subValue}</p>
+        )}
+        {altValue && (
+          <p className="mt-0.5 text-xs text-muted-foreground">{altValue}</p>
         )}
       </CardContent>
     </Card>
