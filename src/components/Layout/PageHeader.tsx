@@ -1,6 +1,7 @@
-import { Calculator, Moon, Monitor, Sun } from "lucide-react";
+import { Moon, Monitor, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/lib/utils/theme";
+import { Logo } from "@/components/Logo";
 
 export function PageHeader() {
   const { theme, cycleTheme } = useTheme();
@@ -17,7 +18,7 @@ export function PageHeader() {
       <div className="mx-auto max-w-4xl px-4 py-4 sm:py-6">
         <div className="flex items-center gap-3">
           <div className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Calculator className="size-5" />
+            <Logo className="size-5" />
           </div>
           <div>
             <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
