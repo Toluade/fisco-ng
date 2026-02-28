@@ -2,6 +2,18 @@
 
 export type EmploymentType = "employed" | "self-employed";
 
+// ─── Foreign Currency ─────────────────────────────────────────────────────────
+
+export type ForeignCurrency = "NGN" | "USD" | "GBP" | "EUR";
+
+export const CURRENCY_SYMBOLS: Record<ForeignCurrency, string> = {
+  NGN: "₦", USD: "$", GBP: "£", EUR: "€",
+};
+
+export const DEFAULT_EXCHANGE_RATES: Record<ForeignCurrency, number> = {
+  NGN: 1, USD: 1650, GBP: 2100, EUR: 1750,
+};
+
 // ─── Month identifiers ───────────────────────────────────────────────────────
 
 export type Month =
@@ -82,6 +94,8 @@ export interface SelfEmployedInputs {
   annualRent: number;              // full annual rent paid
   monthlyWorkExpenses: number;     // monthly work/business expenses
   currentMonth: number;            // 0-indexed (0 = Jan, 11 = Dec) — last filled month
+  incomeCurrency: ForeignCurrency; // default "NGN"
+  exchangeRateToNgn: number;       // 1 unit → N naira; ignored when NGN (rate = 1)
 }
 
 export type TaxInputs = EmployedInputs | SelfEmployedInputs;

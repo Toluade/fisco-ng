@@ -10,6 +10,7 @@ interface MonthIncomeRowProps {
   onChange: (value: number) => void;
   disabled: boolean;       // future months
   isCurrent: boolean;      // current calendar month
+  currencySymbol?: string; // default "₦"
 }
 
 export function MonthIncomeRow({
@@ -18,6 +19,7 @@ export function MonthIncomeRow({
   onChange,
   disabled,
   isCurrent,
+  currencySymbol = "₦",
 }: MonthIncomeRowProps) {
   const [raw, setRaw] = useState("");
   const [focused, setFocused] = useState(false);
@@ -65,7 +67,7 @@ export function MonthIncomeRow({
       </span>
       <div className="relative flex-1">
         <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-          ₦
+          {currencySymbol}
         </span>
         <Input
           ref={inputRef}

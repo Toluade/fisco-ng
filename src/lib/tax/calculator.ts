@@ -120,8 +120,9 @@ function calculateSelfEmployed(inputs: SelfEmployedInputs): TaxCalculationResult
 
   // Sum YTD income (months up to and including currentMonth)
   const elapsedMonths = MONTHS.slice(0, monthsElapsed) as Month[];
+  const rate = inputs.incomeCurrency === "NGN" ? 1 : inputs.exchangeRateToNgn;
   const ytdGrossIncome = elapsedMonths.reduce(
-    (sum, m) => sum + (inputs.monthlyIncomes[m] ?? 0),
+    (sum, m) => sum + (inputs.monthlyIncomes[m] ?? 0) * rate,
     0
   );
 

@@ -1,4 +1,4 @@
-import type { TaxCalculationResult } from "@/lib/tax";
+import type { ForeignCurrency, TaxCalculationResult } from "@/lib/tax";
 import { formatNaira, formatPercent } from "@/lib/utils/format";
 import { SummaryCard } from "./SummaryCard";
 
@@ -49,9 +49,11 @@ export function EmployedSummary({ result }: EmployedSummaryProps) {
 
 interface SelfEmployedSummaryProps {
   result: TaxCalculationResult;
+  incomeCurrency?: ForeignCurrency;
+  exchangeRateToNgn?: number;
 }
 
-export function SelfEmployedSummary({ result }: SelfEmployedSummaryProps) {
+export function SelfEmployedSummary({ result, incomeCurrency, exchangeRateToNgn }: SelfEmployedSummaryProps) {
   const {
     ytdTaxOwed = 0,
     projectedAnnualTax = 0,
@@ -66,32 +68,39 @@ export function SelfEmployedSummary({ result }: SelfEmployedSummaryProps) {
   const remainingMonths = 12 - monthsElapsed;
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-      <SummaryCard
-        label="YTD Tax Owed"
-        value={formatNaira(ytdTaxOwed)}
-        subValue={`${monthsElapsed} month${monthsElapsed !== 1 ? "s" : ""}`}
-        highlight
-      />
-      <SummaryCard
-        label="Projected Annual Tax"
-        value={formatNaira(projectedAnnualTax)}
-        subValue="based on YTD average"
-      />
-      <SummaryCard
-        label="Effective Rate"
-        value={formatPercent(effectiveRate)}
-        subValue="on YTD gross"
-      />
-      <SummaryCard
-        label="YTD Net Income"
-        value={formatNaira(ytdNetIncome)}
-        subValue={
-          remainingMonths > 0
-            ? `${remainingMonths} month${remainingMonths !== 1 ? "s" : ""} remaining`
-            : "Year complete"
-        }
-      />
+    <div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <SummaryCard
+          label="YTD Tax Owed"
+          value={formatNaira(ytdTaxOwed)}
+          subValue={`${monthsElapsed} month${monthsElapsed !== 1 ? "s" : ""}`}
+          highlight
+        />
+        <SummaryCard
+          label="Projected Annual Tax"
+          value={formatNaira(projectedAnnualTax)}
+          subValue="based on YTD average"
+        />
+        <SummaryCard
+          label="Effective Rate"
+          value={formatPercent(effectiveRate)}
+          subValue="on YTD gross"
+        />
+        <SummaryCard
+          label="YTD Net Income"
+          value={formatNaira(ytdNetIncome)}
+          subValue={
+            remainingMonths > 0
+              ? `${remainingMonths} month${remainingMonths !== 1 ? "s" : ""} remaining`
+              : "Year complete"
+          }
+        />
+      </div>
+      {incomeCurrency && incomeCurrency !== "NGN" && (
+        <p className="mt-2 text-center text-xs text-muted-foreground">
+          Figures reflect NGN equivalent at 1 {incomeCurrency} = ₦{formatNaira(exchangeRateToNgn ?? 1)}
+        </p>
+      )}
     </div>
   );
 }

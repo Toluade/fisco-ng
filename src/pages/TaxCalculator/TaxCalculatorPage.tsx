@@ -7,7 +7,7 @@ import { TaxBreakdown } from "@/components/TaxBreakdown/TaxBreakdown";
 import { calculateTax } from "@/lib/tax/calculator";
 import type { EmployedInputs, Month, SelfEmployedInputs } from "@/lib/tax";
 import { MONTHS } from "@/lib/tax";
-import { loadYtdIncomes, saveYtdIncomes } from "@/lib/utils/storage";
+import { loadCurrencyPrefs, loadYtdIncomes, saveCurrencyPrefs, saveYtdIncomes } from "@/lib/utils/storage";
 
 // ─── Defaults ────────────────────────────────────────────────────────────────
 
@@ -33,12 +33,15 @@ function buildSelfEmployedInputs(
   overrides?: Partial<SelfEmployedInputs>
 ): SelfEmployedInputs {
   const savedIncomes = loadYtdIncomes();
+  const savedPrefs = loadCurrencyPrefs();
   return {
     employmentType: "self-employed",
     monthlyIncomes: { ...defaultMonthlyIncomes(), ...savedIncomes },
     annualRent: 0,
     monthlyWorkExpenses: 0,
     currentMonth: currentMonthIndex,
+    incomeCurrency: savedPrefs?.incomeCurrency ?? "NGN",
+    exchangeRateToNgn: savedPrefs?.exchangeRateToNgn ?? 1,
     ...overrides,
   };
 }
@@ -61,6 +64,14 @@ export function TaxCalculatorPage() {
   useEffect(() => {
     saveYtdIncomes(selfEmployedInputs.monthlyIncomes);
   }, [selfEmployedInputs.monthlyIncomes]);
+
+  // Persist currency prefs to localStorage
+  useEffect(() => {
+    saveCurrencyPrefs({
+      incomeCurrency: selfEmployedInputs.incomeCurrency,
+      exchangeRateToNgn: selfEmployedInputs.exchangeRateToNgn,
+    });
+  }, [selfEmployedInputs.incomeCurrency, selfEmployedInputs.exchangeRateToNgn]);
 
   const handleEmployedChange = useCallback((updates: Partial<EmployedInputs>) => {
     setEmployedInputs((prev) => ({ ...prev, ...updates }));
@@ -109,7 +120,11 @@ export function TaxCalculatorPage() {
             inputs={selfEmployedInputs}
             onChange={handleSelfEmployedChange}
           />
-          <SelfEmployedSummary result={selfEmployedResult} />
+          <SelfEmployedSummary
+            result={selfEmployedResult}
+            incomeCurrency={selfEmployedInputs.incomeCurrency}
+            exchangeRateToNgn={selfEmployedInputs.exchangeRateToNgn}
+          />
           <TaxBreakdown result={selfEmployedResult} mode="self-employed" />
         </TabsContent>
       </Tabs>
